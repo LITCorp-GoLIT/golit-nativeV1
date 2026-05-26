@@ -1,25 +1,38 @@
 {
   "expo": {
-    "name": "golit-native",
+    "name": "Golit",
     "slug": "golit-native",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0E0E10",
+    "splash": {
+      "backgroundColor": "#0E0E10"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "io.golit.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Golit necesita acceso a la cámara para fotos de perfil",
+        "NSPhotoLibraryUsageDescription": "Golit necesita acceso a tus fotos",
+        "NSLocationWhenInUseUsageDescription": "Golit usa tu ubicación para mostrar experiencias cercanas"
+      }
     },
     "android": {
+      "package": "io.golit.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+        "backgroundColor": "#0E0E10",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "supabaseUrl": "https://cokytsozudtrjqdobcor.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNva3l0c296dWR0cmpxZG9iY29yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyOTAzNzMsImV4cCI6MjA1Njg2NjM3M30.fMH60qX1TqXwmpmvhPb9pW_3e9K4tQVkxzTfOMU0N8Q"
     }
   }
 }
