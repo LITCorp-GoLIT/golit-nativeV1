@@ -20,7 +20,9 @@
       "supportsTablet": false,
       "bundleIdentifier": "io.golit.app",
       "buildNumber": "1",
-      "associatedDomains": ["applinks:golit.io"],
+      "associatedDomains": [
+        "applinks:golit.io"
+      ],
       "infoPlist": {
         "NSCameraUsageDescription": "Golit necesita acceso a la cámara para escanear QR de asistentes y fotos de perfil",
         "NSPhotoLibraryUsageDescription": "Golit necesita acceso a tus fotos",
@@ -34,20 +36,37 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "golit.io" }],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "https",
+              "host": "golit.io"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "adaptiveIcon": {
         "backgroundColor": "#0E0E10",
         "foregroundImage": "./assets/android-icon-foreground.png"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      ["expo-notifications", { "sounds": [] }],
+      [
+        "expo-notifications",
+        {
+          "sounds": []
+        }
+      ],
       "expo-camera",
       "expo-image-picker",
       "expo-dev-client"
@@ -55,7 +74,10 @@
     "extra": {
       "supabaseUrl": "https://cokytsozudtrjqdobcor.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNva3l0c296dWR0cmpxZG9iY29yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyOTAzNzMsImV4cCI6MjA1Njg2NjM3M30.fMH60qX1TqXwmpmvhPb9pW_3e9K4tQVkxzTfOMU0N8Q",
-      "eas": { "projectId": "golit-native" }
-    }
+      "eas": {
+        "projectId": "00ce40ef-b25e-40bf-8566-0c222a5df62f"
+      }
+    },
+    "owner": "golit.io"
   }
 }
