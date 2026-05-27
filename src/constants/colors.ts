@@ -19,7 +19,7 @@ export const Colors = {
   navBorder: 'rgba(255,255,255,0.08)',
   navIconActive: '#FFFFFF',
   navIconInactive: 'rgba(255,255,255,0.45)',
-  navDot: '#E8621A',
+  navDot: '#E67E22',
 
   success: '#27AE60',
   error: '#E74C3C',

@@ -130,9 +130,13 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
         <Feather
           name={tab.icon as any}
           size={ICON_SIZE}
-          // Web: strokeWidth 2.2 active / 1.7 inactive (Feather doesn't expose
-          // strokeWidth, so we use color exactly as the web does)
-          color={active ? '#FFFFFF' : 'rgba(255,255,255,0.45)'}
+          color={
+            active
+              ? '#FFFFFF'
+              : tab.name === 'Search'
+              ? 'rgba(255,255,255,0.7)'
+              : 'rgba(255,255,255,0.45)'
+          }
         />
         <NavDot active={active} />
       </TouchableOpacity>
@@ -151,7 +155,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
         {children}
       </BlurView>
     ) : (
-      <View style={[style, GLASS_BORDER, { backgroundColor: 'rgba(14,14,16,0.92)' }]}>
+      <View style={[style, GLASS_BORDER, { backgroundColor: 'rgba(14,14,16,0.72)' }]}>
         {children}
       </View>
     );

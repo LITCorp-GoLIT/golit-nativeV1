@@ -1,214 +1,213 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { RootStackParamList } from '../types';
+import { useAuth } from '../hooks/useAuth';
+import { useHostStatus } from '../hooks/useHostStatus';
 import { Colors } from '../constants/colors';
 import { FontSize, Spacing, Radius } from '../constants/theme';
-import { useAuth } from '../hooks/useAuth';
-
-const MenuItem: React.FC<{ label: string; onPress: () => void; danger?: boolean }> = ({
-  label,
-  onPress,
-  danger,
-}) => (
-  <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
-    <Text style={[styles.menuLabel, danger && styles.menuDanger]}>{label}</Text>
-    <Text style={styles.menuArrow}>›</Text>
-  </TouchableOpacity>
-);
+import { RootStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export const ProfileScreen: React.FC = () => {
-  const navigation = useNavigation<Nav>();
   const { user, signOut } = useAuth();
-
-  const handleSignOut = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert('Cerrar sesión', '¿Seguro que quieres salir?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Cerrar sesión',
-        style: 'destructive',
-        onPress: signOut,
-      },
-    ]);
-  };
+  const navigation = useNavigation<Nav>();
+  const { isHost, hasApplication, applicationStatus } = useHostStatus();
 
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.guestContent}>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarInitial}>?</Text>
-          </View>
-          <Text style={styles.guestTitle}>Hola, explorador</Text>
-          <Text style={styles.guestSubtitle}>Crea una cuenta para guardar tus planes favoritos</Text>
+        <View style={styles.center}>
+          <Feather name="user" size={48} color="rgba(255,255,255,0.15)" />
+          <Text style={styles.title}>Tu perfil</Text>
+          <Text style={styles.sub}>
+            Inicia sesión para guardar tus planes favoritos y personalizar tu experiencia
+          </Text>
           <TouchableOpacity
-            style={styles.primaryBtn}
-            onPress={() => navigation.navigate('Auth')}
+            style={styles.btn}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              navigation.navigate('Auth');
+            }}
+            activeOpacity={0.85}
           >
-            <Text style={styles.primaryBtnText}>Iniciar sesión</Text>
+            <Text style={styles.btnText}>Iniciar sesión</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  const displayName = user.user_metadata?.full_name ?? user.email ?? 'Usuario';
-  const initials = displayName.slice(0, 1).toUpperCase();
+  const memberYear = user.created_at ? new Date(user.created_at).getFullYear() : '—';
+  const initial = user.email?.[0]?.toUpperCase() ?? '?';
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Avatar & name */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarInitial}>{initials}</Text>
+      <View style={styles.content}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{initial}</Text>
+        </View>
+        <Text style={styles.email}>{user.email}</Text>
+        <Text style={styles.meta}>Miembro desde {memberYear}</Text>
+
+        <TouchableOpacity
+          style={styles.menuBtn}
+          onPress={() => navigation.navigate('MyBookings')}
+          activeOpacity={0.75}
+        >
+          <Feather name="calendar" size={16} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.menuBtnText}>Mis reservas</Text>
+          <Feather name="chevron-right" size={16} color="rgba(255,255,255,0.3)" style={{ marginLeft: 'auto' }} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuBtn}
+          onPress={() => navigation.navigate('Settings')}
+          activeOpacity={0.75}
+        >
+          <Feather name="settings" size={16} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.menuBtnText}>Configuración</Text>
+          <Feather name="chevron-right" size={16} color="rgba(255,255,255,0.3)" style={{ marginLeft: 'auto' }} />
+        </TouchableOpacity>
+
+        {isHost ? (
+          <TouchableOpacity
+            style={[styles.menuBtn, styles.menuBtnHost]}
+            onPress={() => navigation.navigate('HostDashboard')}
+            activeOpacity={0.75}
+          >
+            <Feather name="bar-chart-2" size={16} color="#E8621A" />
+            <Text style={[styles.menuBtnText, { color: '#E8621A' }]}>Dashboard de anfitrión</Text>
+            <Feather name="chevron-right" size={16} color="#E8621A66" style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+        ) : hasApplication ? (
+          <View style={styles.applicationStatus}>
+            <Feather name="clock" size={14} color="#F59E0B" />
+            <Text style={styles.applicationStatusText}>
+              Solicitud de anfitrión{' '}
+              {applicationStatus === 'pending' ? 'en revisión' : applicationStatus === 'rejected' ? 'rechazada' : applicationStatus}
+            </Text>
           </View>
-          <Text style={styles.displayName}>{displayName}</Text>
-          <Text style={styles.email}>{user.email}</Text>
-        </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.menuBtn}
+            onPress={() => navigation.navigate('BecomeHost')}
+            activeOpacity={0.75}
+          >
+            <Feather name="star" size={16} color="rgba(255,255,255,0.7)" />
+            <Text style={styles.menuBtnText}>Ser anfitrión en golit</Text>
+            <Feather name="chevron-right" size={16} color="rgba(255,255,255,0.3)" style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+        )}
 
-        {/* Menu */}
-        <View style={styles.menuSection}>
-          <Text style={styles.menuSectionTitle}>Cuenta</Text>
-          <MenuItem label="Mis reservas" onPress={() => {}} />
-          <MenuItem label="Notificaciones" onPress={() => {}} />
-          <MenuItem label="Preferencias" onPress={() => {}} />
-        </View>
-
-        <View style={styles.menuSection}>
-          <Text style={styles.menuSectionTitle}>Soporte</Text>
-          <MenuItem label="Ayuda" onPress={() => {}} />
-          <MenuItem label="Términos de servicio" onPress={() => {}} />
-          <MenuItem label="Política de privacidad" onPress={() => {}} />
-        </View>
-
-        <View style={styles.menuSection}>
-          <MenuItem label="Cerrar sesión" onPress={handleSignOut} danger />
-        </View>
-
-        <View style={{ height: 80 }} />
-      </ScrollView>
+        <TouchableOpacity
+          style={styles.signOutBtn}
+          onPress={async () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            await signOut();
+          }}
+          activeOpacity={0.75}
+        >
+          <Feather name="log-out" size={16} color="rgba(255,255,255,0.55)" />
+          <Text style={styles.signOutText}>Cerrar sesión</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: Colors.background },
+  center: {
     flex: 1,
-    backgroundColor: Colors.background,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    paddingVertical: Spacing['2xl'],
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.border,
-  },
-  avatarCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.xl,
   },
-  avatarInitial: {
+  title: {
     color: Colors.textPrimary,
-    fontSize: FontSize.xl,
+    fontSize: FontSize['2xl'],
     fontWeight: '700',
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
-  displayName: {
-    color: Colors.textPrimary,
-    fontSize: FontSize.lg,
-    fontWeight: '700',
-  },
-  email: {
-    color: Colors.textMuted,
+  sub: {
+    color: Colors.textSecondary,
     fontSize: FontSize.sm,
-    marginTop: Spacing.xs,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: Spacing.xl,
   },
-  menuSection: {
-    marginTop: Spacing.md,
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.border,
-    paddingTop: Spacing.sm,
-  },
-  menuSectionTitle: {
-    color: Colors.textMuted,
-    fontSize: FontSize.xs,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing.xs,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  btn: {
+    backgroundColor: '#E8621A',
+    borderRadius: Radius.lg,
+    paddingVertical: 15,
+    paddingHorizontal: 40,
     alignItems: 'center',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.base,
   },
-  menuLabel: {
-    color: Colors.textPrimary,
-    fontSize: FontSize.base,
-  },
-  menuDanger: {
-    color: Colors.error,
-  },
-  menuArrow: {
-    color: Colors.textMuted,
-    fontSize: FontSize.lg,
-  },
-  guestContent: {
+  btnText: { color: '#FFFFFF', fontSize: FontSize.base, fontWeight: '700' },
+  content: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    padding: Spacing.xl,
+    paddingTop: Spacing['3xl'],
+    paddingHorizontal: Spacing.xl,
   },
-  avatarPlaceholder: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.surface,
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#E8621A',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.base,
   },
-  guestTitle: {
+  avatarText: { color: '#FFFFFF', fontSize: 32, fontWeight: '700' },
+  email: {
     color: Colors.textPrimary,
-    fontSize: FontSize.xl,
-    fontWeight: '700',
+    fontSize: FontSize.base,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  meta: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.sm,
+    marginBottom: Spacing['3xl'],
+  },
+  menuBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: Radius.md,
+    backgroundColor: '#1A1A1A',
+    borderWidth: 0.5,
+    borderColor: '#2A2A2A',
     marginBottom: Spacing.sm,
   },
-  guestSubtitle: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.base,
-    textAlign: 'center',
-    marginBottom: Spacing.xl,
+  menuBtnText: { color: 'rgba(255,255,255,0.7)', fontSize: FontSize.sm, fontWeight: '600', flex: 1 },
+  signOutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: Radius.md,
+    borderWidth: 0.5,
+    borderColor: '#2A2A2A',
   },
-  primaryBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.lg,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.base,
+  signOutText: { color: 'rgba(255,255,255,0.55)', fontSize: FontSize.sm, fontWeight: '600' },
+  menuBtnHost: { borderColor: '#E8621A33', backgroundColor: '#E8621A0A' },
+  applicationStatus: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 12, paddingHorizontal: 16,
+    borderRadius: Radius.md, backgroundColor: '#F59E0B11',
+    borderWidth: 0.5, borderColor: '#F59E0B33', marginBottom: Spacing.sm,
   },
-  primaryBtnText: {
-    color: Colors.textPrimary,
-    fontWeight: '700',
-    fontSize: FontSize.base,
-  },
+  applicationStatusText: { color: '#F59E0B', fontSize: FontSize.sm, fontWeight: '600' },
 });

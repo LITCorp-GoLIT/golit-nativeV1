@@ -78,6 +78,7 @@ export const ExperienceCard: React.FC<Props> = ({
           source={{ uri: (experience.primary_image_url ?? experience.image_url) ?? undefined }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
+          cachePolicy="memory-disk"
           transition={200}
         />
 

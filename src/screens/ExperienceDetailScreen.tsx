@@ -6,8 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  Alert,
-  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -17,9 +15,11 @@ import * as Haptics from 'expo-haptics';
 import { Colors } from '../constants/colors';
 import { FontSize, Spacing, Radius, Shadow } from '../constants/theme';
 import { useExperienceDetail } from '../hooks/useExperiences';
+import { useReviews } from '../hooks/useReviews';
+import { useChat } from '../hooks/useChat';
+import { useAuth } from '../hooks/useAuth';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { RootStackParamList } from '../types';
-import { useAuth } from '../hooks/useAuth';
 
 type RouteParams = RouteProp<RootStackParamList, 'ExperienceDetail'>;
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -36,10 +36,11 @@ export const ExperienceDetailScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<RouteParams>();
   const { id } = route.params;
-  const { user } = useAuth();
 
   const { data: experience, isLoading, error } = useExperienceDetail(id);
-
+  const { reviews, avgRating } = useReviews('experience', id);
+  const { getOrCreateConversation } = useChat();
+  const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
 
   if (isLoading) return <LoadingSpinner fullScreen />;
@@ -59,21 +60,7 @@ export const ExperienceDetailScreen: React.FC = () => {
 
   const handleBook = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (!user) {
-      navigation.navigate('Auth');
-      return;
-    }
-    Alert.alert(
-      'Solicitar reserva',
-      `¿Quieres solicitar una reserva para "${experience.title}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Confirmar',
-          onPress: () => Alert.alert('¡Listo!', 'Tu solicitud fue enviada al anfitrión.'),
-        },
-      ],
-    );
+    navigation.navigate('Checkout', { experienceId: experience.id });
   };
 
   const handleSave = () => {
@@ -81,10 +68,12 @@ export const ExperienceDetailScreen: React.FC = () => {
     setIsSaved((v) => !v);
   };
 
-  const handleHostPress = () => {
-    if (experience.host_id) {
-      navigation.navigate('HostPublic', { id: experience.host_id });
-    }
+  const handleChat = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!user) { navigation.navigate('Auth'); return; }
+    if (!experience?.host_id) return;
+    const conv = await getOrCreateConversation(experience.host_id, experience.id);
+    if (conv) navigation.navigate('ChatRoom', { conversationId: conv.id, hostName: 'Anfitrión' });
   };
 
   return (
@@ -93,12 +82,11 @@ export const ExperienceDetailScreen: React.FC = () => {
         {/* Hero Image */}
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: experience.image_url ?? undefined }}
+            source={{ uri: (experience.primary_image_url ?? experience.image_url) ?? undefined }}
             style={styles.image}
             contentFit="cover"
             transition={300}
           />
-          {/* Back + Save */}
           <SafeAreaView style={styles.imageOverlay} edges={['top']}>
             <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
               <Text style={styles.iconButtonText}>←</Text>
@@ -118,15 +106,14 @@ export const ExperienceDetailScreen: React.FC = () => {
 
           <View style={styles.metaRow}>
             <Text style={styles.metaText}>📍 {experience.location}</Text>
-            {experience.duration && (
-              <Text style={styles.metaText}>⏱ {experience.duration}</Text>
+            {experience.start_time && (
+              <Text style={styles.metaText}>🕐 {experience.start_time.slice(0, 5)}</Text>
             )}
             {experience.rating && (
               <Text style={styles.metaText}>⭐ {experience.rating.toFixed(1)}</Text>
             )}
           </View>
 
-          {/* Price */}
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Precio</Text>
             <Text style={styles.price}>
@@ -134,7 +121,6 @@ export const ExperienceDetailScreen: React.FC = () => {
             </Text>
           </View>
 
-          {/* Description */}
           {(experience.description ?? experience.short_description) && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Descripción</Text>
@@ -144,12 +130,38 @@ export const ExperienceDetailScreen: React.FC = () => {
             </View>
           )}
 
-          {/* Host */}
+          {/* Reviews */}
+          {reviews.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.reviewsHeader}>
+                <Text style={styles.sectionTitle}>Reseñas</Text>
+                {avgRating != null && (
+                  <View style={styles.avgRating}>
+                    <Text style={styles.avgRatingText}>⭐ {avgRating.toFixed(1)}</Text>
+                    <Text style={styles.avgRatingCount}>({reviews.length})</Text>
+                  </View>
+                )}
+              </View>
+              {reviews.slice(0, 3).map((r) => (
+                <View key={r.id} style={styles.reviewCard}>
+                  <View style={styles.reviewTop}>
+                    <Text style={styles.reviewAuthor}>{r.user_name}</Text>
+                    <Text style={styles.reviewRating}>{'⭐'.repeat(r.rating)}</Text>
+                  </View>
+                  {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Contact host */}
           {experience.host_id && (
-            <TouchableOpacity style={styles.hostCard} onPress={handleHostPress}>
-              <Text style={styles.hostLabel}>Anfitrión</Text>
-              <Text style={styles.hostLink}>Ver perfil del anfitrión →</Text>
-            </TouchableOpacity>
+            <View style={styles.section}>
+              <TouchableOpacity style={styles.chatBtn} onPress={handleChat} activeOpacity={0.8}>
+                <Text style={styles.chatBtnIcon}>💬</Text>
+                <Text style={styles.chatBtnText}>Contactar anfitrión</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -266,26 +278,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.base,
     lineHeight: 24,
   },
-  hostCard: {
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: Radius.lg,
-    padding: Spacing.base,
-    marginBottom: Spacing.base,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  hostLabel: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.sm,
-  },
-  hostLink: {
-    color: Colors.primary,
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-  },
   ctaContainer: {
     position: 'absolute',
     bottom: 0,
@@ -326,8 +318,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
   },
-  backButtonText: {
-    color: Colors.textPrimary,
-    fontWeight: '700',
+  backButtonText: { color: Colors.textPrimary, fontWeight: '700' },
+  reviewsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.sm },
+  avgRating: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  avgRatingText: { color: Colors.textPrimary, fontSize: FontSize.sm, fontWeight: '700' },
+  avgRatingCount: { color: Colors.textSecondary, fontSize: FontSize.xs },
+  reviewCard: {
+    backgroundColor: Colors.backgroundCard, borderRadius: Radius.md,
+    padding: Spacing.sm, marginBottom: Spacing.xs,
+    borderWidth: 0.5, borderColor: Colors.border,
   },
+  reviewTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  reviewAuthor: { color: Colors.textPrimary, fontSize: FontSize.sm, fontWeight: '600' },
+  reviewRating: { fontSize: 11 },
+  reviewComment: { color: Colors.textSecondary, fontSize: FontSize.sm, lineHeight: 18 },
+  chatBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: Colors.backgroundCard, borderRadius: Radius.lg,
+    padding: Spacing.base, borderWidth: 0.5, borderColor: Colors.border,
+  },
+  chatBtnIcon: { fontSize: 18 },
+  chatBtnText: { color: Colors.textPrimary, fontSize: FontSize.sm, fontWeight: '600' },
 });

@@ -7,21 +7,37 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0E0E10",
+    "scheme": "golit",
     "splash": {
       "backgroundColor": "#0E0E10"
+    },
+    "notification": {
+      "color": "#E8621A",
+      "iosDisplayInForeground": true,
+      "androidMode": "default"
     },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "io.golit.app",
       "buildNumber": "1",
+      "associatedDomains": ["applinks:golit.io"],
       "infoPlist": {
-        "NSCameraUsageDescription": "Golit necesita acceso a la cámara para fotos de perfil",
+        "NSCameraUsageDescription": "Golit necesita acceso a la cámara para escanear QR de asistentes y fotos de perfil",
         "NSPhotoLibraryUsageDescription": "Golit necesita acceso a tus fotos",
-        "NSLocationWhenInUseUsageDescription": "Golit usa tu ubicación para mostrar experiencias cercanas"
+        "NSLocationWhenInUseUsageDescription": "Golit usa tu ubicación para mostrarte experiencias cercanas"
       }
     },
     "android": {
       "package": "io.golit.app",
+      "versionCode": 1,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "golit.io" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#0E0E10",
         "foregroundImage": "./assets/android-icon-foreground.png"
@@ -30,9 +46,16 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      ["expo-notifications", { "sounds": [] }],
+      "expo-camera",
+      "expo-image-picker",
+      "expo-dev-client"
+    ],
     "extra": {
       "supabaseUrl": "https://cokytsozudtrjqdobcor.supabase.co",
-      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNva3l0c296dWR0cmpxZG9iY29yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyOTAzNzMsImV4cCI6MjA1Njg2NjM3M30.fMH60qX1TqXwmpmvhPb9pW_3e9K4tQVkxzTfOMU0N8Q"
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNva3l0c296dWR0cmpxZG9iY29yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyOTAzNzMsImV4cCI6MjA1Njg2NjM3M30.fMH60qX1TqXwmpmvhPb9pW_3e9K4tQVkxzTfOMU0N8Q",
+      "eas": { "projectId": "golit-native" }
     }
   }
 }
